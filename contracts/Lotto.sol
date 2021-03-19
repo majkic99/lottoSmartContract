@@ -528,6 +528,11 @@ contract Lotto is VRFConsumerBase{
     }
 
     function importStats(uint[7] memory stats) public onlyOrganiser{
+        uint counter = 0;
+        for (uint8 i = 0; i < 7; i++){
+            counter += numberOfWinningTicketsByCorrectNumber[i];
+        }
+        require(counter == currId - 1, "Stats aren't adding up");
         numberOfWinningTicketsByCorrectNumber[0] = stats[0];
         numberOfWinningTicketsByCorrectNumber[1] = stats[1];
         numberOfWinningTicketsByCorrectNumber[2] = stats[2];
