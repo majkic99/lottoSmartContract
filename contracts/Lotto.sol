@@ -530,11 +530,7 @@ contract Lotto is VRFConsumerBase{
       * - numberCounter must be zero
       */
     function buyTicket(uint8[7] memory chosenNumbers) public payable raffleNotStarted validNumbers(chosenNumbers) returns (uint){
-
         require (msg.value >= ticketPrice);
-
-        //if you send more money than the ticket price you can withdraw after the round is over
-        //ideas - either enable withdrawals before the raffle has ended or create another mapping and another method for returning overpaid funds
         pendingWithdrawals[msg.sender] += (msg.value - ticketPrice);
         Ticket memory ticket = Ticket(currId++, chosenNumbers, msg.sender, 0, false);
         tickets.push(ticket);
@@ -544,7 +540,7 @@ contract Lotto is VRFConsumerBase{
         return ticket.id;
     }
     /**
-      * @dev Only organiser can call this, it's called after the calculations are done off-chain (anyone can run them, only organiser can import them.
+      * @dev Only organiser can call this, it's called after the calculations are done off-chain.
       * Calls startRaffle which calculates how much is a winning ticket worth.
       * Requirements:
       * @param stats - array of integers equal to or greater than 0
@@ -604,7 +600,6 @@ contract Lotto is VRFConsumerBase{
       */
     function getRandomNumber(uint256 userProvidedSeed) public onlyOrganiser returns (bytes32 requestId) {
         require(LINK.balanceOf(address(this)) > fee, "Not enough LINK - fill contract with faucet");
-
         return requestRandomness(keyHash, fee, userProvidedSeed);
     }
 
@@ -621,25 +616,6 @@ contract Lotto is VRFConsumerBase{
     }
 
     function startRaffle() internal onlyOrganiser allNumbersDrawn statsImported {
-
-
-        /*
-        //This needs to be off-chain because of undeterminable loop duration (tickets.length -> infinity)
-        for (uint i = 0; i < tickets.length; i++){
-            uint8 counter = 0;
-            for (uint8 j = 0; j < 7; j++){
-                for (uint8 k = 0; k < 7; k++){
-                    if (i != j){
-                        if (tickets[i].chosenNumbers[j] == resultNumbers[k]){
-                            counter += 1;
-                        }
-                    }
-                }
-                tickets[i].numbersCorrect = counter;
-                numberOfWinningTicketsByCorrectNumber[counter] += 1;
-            }
-        }
-        */
         winningAmountByCorrectNumber[0] = 0;
         winningAmountByCorrectNumber[1] = 0;
         winningAmountByCorrectNumber[2] = 0;
@@ -648,13 +624,6 @@ contract Lotto is VRFConsumerBase{
         winningAmountByCorrectNumber[5] = (aggregatePaid / 100 * 10) / (numberOfWinningTicketsByCorrectNumber[5] == 0 ? 1: numberOfWinningTicketsByCorrectNumber[5]);
         winningAmountByCorrectNumber[6] = (aggregatePaid / 100 * 20) / (numberOfWinningTicketsByCorrectNumber[6] == 0 ? 1: numberOfWinningTicketsByCorrectNumber[6]);
         winningAmountByCorrectNumber[7] = (aggregatePaid / 100 * 45) / (numberOfWinningTicketsByCorrectNumber[7] == 0 ? 1: numberOfWinningTicketsByCorrectNumber[7]);
-
-        /*
-        //This has to be implemented separately
-        for (uint i = 0; i < tickets.length; i++){
-            pendingWithdrawals[tickets[i].owner] += winningAmountByCorrectNumber[tickets[i].numbersCorrect];
-        }
-        */
         done = true;
         emit NumbersDrawn(resultNumbers);
     }
@@ -670,12 +639,15 @@ contract Lotto is VRFConsumerBase{
         if (numbers[5] > 39 || numbers[5] < 1) return false;
         if (numbers[6] > 39 || numbers[6] < 1) return false;
 
-        if (numbers[0] == numbers[1] || numbers[0] == numbers[2] || numbers[0] == numbers[3] || numbers[0] == numbers[4] || numbers[0] == numbers[5] || numbers[0] == numbers[6] ||
-        numbers[1] == numbers[2] || numbers[1] == numbers[3] || numbers[1] == numbers[4] || numbers[1] == numbers[5] || numbers[1] == numbers[6] ||
-        numbers[2] == numbers[3] || numbers[2] == numbers[4] || numbers[2] == numbers[5] || numbers[2] == numbers[6] ||
-        numbers[3] == numbers[4] || numbers[3] == numbers[5] || numbers[3] == numbers[6] ||
-        numbers[4] == numbers[5] || numbers[4] == numbers[6] || numbers[5] == numbers[6] ){
-            return false;
+        if (numbers[0] == numbers[1] || numbers[0] == numbers[2] || numbers[0] == numbers[3] ||
+            numbers[0] == numbers[4] || numbers[0] == numbers[5] || numbers[0] == numbers[6] ||
+            numbers[1] == numbers[2] || numbers[1] == numbers[3] || numbers[1] == numbers[4] ||
+            numbers[1] == numbers[5] || numbers[1] == numbers[6] || numbers[2] == numbers[3] ||
+            numbers[2] == numbers[4] || numbers[2] == numbers[5] || numbers[2] == numbers[6] ||
+            numbers[3] == numbers[4] || numbers[3] == numbers[5] || numbers[3] == numbers[6] ||
+            numbers[4] == numbers[5] || numbers[4] == numbers[6] || numbers[5] == numbers[6] )
+        {
+                return false;
         }
 
         return true;
