@@ -392,6 +392,8 @@ contract Lotto is VRFConsumerBase{
     //sets true when you've calculated the number of tickets with 0,1,2,3,4,5,6,7 correct numbers;
     bool statsImportedBool;
 
+    bool public organisersCutWithdrawn;
+
     uint256 public ticketPrice = 0.1 ether;
 
     address organiser;
@@ -421,6 +423,8 @@ contract Lotto is VRFConsumerBase{
     event Received(address, uint);
 
     event TicketPaidOut(Ticket);
+
+    event OrganiserWithdrawnFivePercent(address organiser);
 
     struct Ticket{
         uint id;
@@ -460,6 +464,11 @@ contract Lotto is VRFConsumerBase{
         _;
     }
 
+    modifier organiserCutNotWithdrawn(){
+        require(!organisersCutWithdrawn, "You have already withdrawn your cut");
+        _;
+    }
+
     constructor()
     VRFConsumerBase(
         0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9, // VRF Coordinator
@@ -478,6 +487,13 @@ contract Lotto is VRFConsumerBase{
         emit Received(msg.sender, msg.value);
     }
 
+    function withdrawOrganisersCut() external payable onlyOrganiser organiserCutNotWithdrawn raffleDone{
+        uint amount = aggregatePaid / 100 * 5;
+        organisersCutWithdrawn = true;
+        payable(msg.sender).transfer(amount);
+        emit OrganiserWithdrawnFivePercent(msg.sender);
+    }
+
     function withdrawLink() external payable onlyOrganiser{
         require(LINK.transfer(msg.sender, LINK.balanceOf(address(this))), "Unable to transfer");
     }
@@ -493,6 +509,7 @@ contract Lotto is VRFConsumerBase{
     function getChosenNumbersByTicketID(uint id) public view returns(uint8[7] memory){
         return ticketsByID[id].chosenNumbers;
     }
+
     //ticket must be bought before the raffle started, you enter 7 numbers between 1 and 39 as an array (format [x,x,x,x,x,x,x])
     //returns ticket id, you must remember it to pay it out
     function buyTicket(uint8[7] memory chosenNumbers) public payable raffleNotStarted validNumbers(chosenNumbers) returns (uint){
