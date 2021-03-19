@@ -599,8 +599,14 @@ contract Lotto is VRFConsumerBase{
       * @param userProvidedSeed - any random number
       */
     function getRandomNumber(uint256 userProvidedSeed) public onlyOrganiser returns (bytes32 requestId) {
+        //changed for testing without chainlink, result number at the end is equal to userProvidedSeed
+
+        fulfillRandomness(keccak256(abi.encodePacked("ok")), userProvidedSeed);
+        return keccak256(abi.encodePacked("ok"));
+        /*
         require(LINK.balanceOf(address(this)) > fee, "Not enough LINK - fill contract with faucet");
         return requestRandomness(keyHash, fee, userProvidedSeed);
+        */
     }
 
     //Callback function used by VRF Coordinator
