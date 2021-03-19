@@ -394,7 +394,7 @@ contract Lotto is VRFConsumerBase{
     //if true you can pay out tickets
     bool public done;
     //sets true when you've calculated the number of tickets with 0,1,2,3,4,5,6,7 correct numbers;
-    bool statsImportedBool;
+    bool public statsImportedBool;
     //this exists so organiser can only withdraw once
     bool public organisersCutWithdrawn;
 
@@ -408,9 +408,9 @@ contract Lotto is VRFConsumerBase{
 
     mapping (address => uint) pendingWithdrawals;
 
-    mapping(uint8 => uint) numberOfWinningTicketsByCorrectNumber;
+    mapping(uint8 => uint) public numberOfWinningTicketsByCorrectNumber;
 
-    mapping(uint8 => uint) winningAmountByCorrectNumber;
+    mapping(uint8 => uint) public winningAmountByCorrectNumber;
     //first starts with 7 zeroes, later is filled with 7 different numbers via 7 calls to RandomNumber
     uint8[7] resultNumbers;
     //array of numbers between 1-39
@@ -549,7 +549,7 @@ contract Lotto is VRFConsumerBase{
     function importStats(uint[7] memory stats) public onlyOrganiser{
         uint counter = 0;
         for (uint8 i = 0; i < 7; i++){
-            counter += numberOfWinningTicketsByCorrectNumber[i];
+            counter += stats[i];
         }
         require(counter == currId - 1, "Stats aren't adding up");
         numberOfWinningTicketsByCorrectNumber[0] = stats[0];
@@ -559,6 +559,7 @@ contract Lotto is VRFConsumerBase{
         numberOfWinningTicketsByCorrectNumber[4] = stats[4];
         numberOfWinningTicketsByCorrectNumber[5] = stats[5];
         numberOfWinningTicketsByCorrectNumber[6] = stats[6];
+        statsImportedBool = true;
         startRaffle();
     }
     /**

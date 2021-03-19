@@ -96,7 +96,7 @@ contract('Lotto', () => {
 
         const raffleDone = await lotto.done.call();
 
-        const statsImported = await lotto.statsImported.call();
+        const statsImported = await lotto.statsImportedBool.call();
         assert(raffleDone && statsImported);
 
         for (let i = 0; i < 7; i++){
@@ -104,7 +104,7 @@ contract('Lotto', () => {
             assert(numberOfTickets.toNumber() == numberOfWinningTicketsByCorrectNumbers[i]);
 
             const winningsPerCorrectNumbers = await lotto.winningAmountByCorrectNumber(i);
-            console.log(winningsPerCorrectNumbers.toNumber());
+            //console.log(winningsPerCorrectNumbers.toNumber());
         }
 
 
