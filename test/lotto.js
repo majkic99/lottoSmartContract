@@ -5,6 +5,10 @@ contract('Lotto', () => {
         const lotto = await Lotto.deployed();
         //console.log(lotto.address);
         assert(lotto.address != '');
+/*
+        const randomNumber = await lotto.getRandomNumber(1);
+        console.log(randomNumber.toNumber());
+*/
         const currIdAtStart = await lotto.currId.call();
         assert(currIdAtStart.toNumber() === 1);
 
@@ -27,22 +31,26 @@ contract('Lotto', () => {
 contract('Lotto', () => {
     it('Buying tickets test', async() => {
         const lotto = await Lotto.deployed();
-
-        for (let i = 0; i < 10; i++){
+        var numberOfTicketsToBuy = 10;
+        for (let i = 0; i < numberOfTicketsToBuy; i++){
             var numbers= [];
             for (let j = 0; j < 7; j++){
                 do{
                     var x = Math.floor(Math.random() * 39) + 1;
-
                 }while (numbers.includes(x));
                 numbers.push(x);
             }
 
             const ticket = await lotto.buyTicket(numbers, {value : 100000000000000000});
-            console.log(ticket);
+            //console.log(ticket);
+
+            const numbersSavedObject = await lotto.getChosenNumbersByTicketID(i+1);
+            for (let k = 0; k < 7; k++){
+                assert(numbers[k] = numbersSavedObject[k].toNumber());
+            }
         }
         const currIdAtStart = await lotto.currId.call();
-        assert(currIdAtStart.toNumber() === 11);
+        assert(currIdAtStart.toNumber() === numberOfTicketsToBuy+1);
 
     })
 })

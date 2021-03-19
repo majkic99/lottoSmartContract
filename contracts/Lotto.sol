@@ -396,9 +396,9 @@ contract Lotto is VRFConsumerBase{
 
     address organiser;
 
-    Ticket[] public tickets;
+    Ticket[] tickets;
 
-    mapping(uint => Ticket) ticketsByID;
+    mapping(uint => Ticket) public ticketsByID;
 
     mapping (address => uint) pendingWithdrawals;
 
@@ -490,6 +490,9 @@ contract Lotto is VRFConsumerBase{
         return resultNumbers;
     }
 
+    function getChosenNumbersByTicketID(uint id) public view returns(uint8[7] memory){
+        return ticketsByID[id].chosenNumbers;
+    }
     //ticket must be bought before the raffle started, you enter 7 numbers between 1 and 39 as an array (format [x,x,x,x,x,x,x])
     //returns ticket id, you must remember it to pay it out
     function buyTicket(uint8[7] memory chosenNumbers) public payable raffleNotStarted validNumbers(chosenNumbers) returns (uint){
