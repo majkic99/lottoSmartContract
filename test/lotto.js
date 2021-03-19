@@ -53,6 +53,6 @@ contract('Lotto', () => {
     //TODO  buyTickets with wrong Numbers
     //TODO  test what happens with wrong stats
     //TODO  try paying each ticket out, and calculate how much organiser can withdraw and if it's the correct 5%
-    
+
 })
 

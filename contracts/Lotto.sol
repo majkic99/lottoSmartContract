@@ -370,10 +370,14 @@ abstract contract VRFConsumerBase is VRFRequestIDBase {
 
 pragma solidity 0.6.6;
 pragma experimental ABIEncoderV2;
-
 // SPDX-License-Identifier: MIT
 
-
+/**
+ * @dev Contract for playing Lotto game with lots of players, where organiser
+ * is guaranteed to take only 5 percent.
+ *
+ * Uses VRFConsumerBase and chainlink integration for random number generation.
+ */
 contract Lotto is VRFConsumerBase{
     //for creating random number
     bytes32 internal keyHash;
@@ -383,7 +387,7 @@ contract Lotto is VRFConsumerBase{
     uint256 randomResult;
     //counts how many numbers have been drawn already, after this hits 7 no more numbers are added to resultNumbers
     uint8 public numberCounter;
-
+    //sum of all tickets paid for => (currId - 1) * ticketPrice
     uint public aggregatePaid;
     //current ticket id
     uint public currId = 1;
@@ -391,7 +395,7 @@ contract Lotto is VRFConsumerBase{
     bool public done;
     //sets true when you've calculated the number of tickets with 0,1,2,3,4,5,6,7 correct numbers;
     bool statsImportedBool;
-
+    //this exists so organiser can only withdraw once
     bool public organisersCutWithdrawn;
 
     uint256 public ticketPrice = 0.1 ether;
@@ -407,7 +411,7 @@ contract Lotto is VRFConsumerBase{
     mapping(uint8 => uint) numberOfWinningTicketsByCorrectNumber;
 
     mapping(uint8 => uint) winningAmountByCorrectNumber;
-
+    //first starts with 7 zeroes, later is filled with 7 different numbers via 7 calls to RandomNumber
     uint8[7] resultNumbers;
     //array of numbers between 1-39
     uint8[] numberDrum;
@@ -486,7 +490,14 @@ contract Lotto is VRFConsumerBase{
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }
-
+    /**
+      * @dev Organiser calls this after everything is done so he can withdraw 5%
+      *
+      * Requirements:
+      * - raffle has to be done
+      * - only organiser can call it
+      * - organiser has to be calling it for the first time
+      */
     function withdrawOrganisersCut() external payable onlyOrganiser organiserCutNotWithdrawn raffleDone{
         uint amount = aggregatePaid / 100 * 5;
         organisersCutWithdrawn = true;
@@ -510,8 +521,14 @@ contract Lotto is VRFConsumerBase{
         return ticketsByID[id].chosenNumbers;
     }
 
-    //ticket must be bought before the raffle started, you enter 7 numbers between 1 and 39 as an array (format [x,x,x,x,x,x,x])
-    //returns ticket id, you must remember it to pay it out
+    /**
+      * @dev Anyone can call this before the first number has been drawn (first RandomNumber call)
+      *
+      * Requirements:
+      * - value to be higher than ticket price (extra can be withdrawn immediately
+      * @param chosenNumbers - has to be an array of 7 valid numbers (between 1-39, all different)
+      * - numberCounter must be zero
+      */
     function buyTicket(uint8[7] memory chosenNumbers) public payable raffleNotStarted validNumbers(chosenNumbers) returns (uint){
 
         require (msg.value >= ticketPrice);
@@ -526,7 +543,13 @@ contract Lotto is VRFConsumerBase{
         emit TicketBought(ticket);
         return ticket.id;
     }
-
+    /**
+      * @dev Only organiser can call this, it's called after the calculations are done off-chain (anyone can run them, only organiser can import them.
+      * Calls startRaffle which calculates how much is a winning ticket worth.
+      * Requirements:
+      * @param stats - array of integers equal to or greater than 0
+      * - values of array combined have to be equal to currId - 1
+      */
     function importStats(uint[7] memory stats) public onlyOrganiser{
         uint counter = 0;
         for (uint8 i = 0; i < 7; i++){
@@ -542,7 +565,12 @@ contract Lotto is VRFConsumerBase{
         numberOfWinningTicketsByCorrectNumber[6] = stats[6];
         startRaffle();
     }
-
+    /**
+      * @dev Can be called after raffle has ended
+      * Ticket can be redeemed only by it's owner, after redeeming winnings will be put on withdraw balance
+      * Requirements:
+      * @param id - id of ticket you want to be reedemed
+      */
     function payOutTicketByID(uint id) public raffleDone{
         Ticket storage ticket = ticketsByID[id];
         require(ticket.owner == msg.sender, "You're not the owner of this ticket");
@@ -561,14 +589,19 @@ contract Lotto is VRFConsumerBase{
         pendingWithdrawals[ticket.owner] += winningAmountByCorrectNumber[ticket.numbersCorrect];
         emit TicketPaidOut(ticket);
     }
-
+    /**
+      * @dev Sender withdraws any winnings that he had (either from redeeming tickets or from overpaying for a ticket)
+      */
     function withdrawWinnings() public payable {
         uint amount = pendingWithdrawals[msg.sender];
         pendingWithdrawals[msg.sender] = 0;
         payable(msg.sender).transfer(amount);
         emit Withdrawal(msg.sender, amount);
     }
-
+    /**
+      * @dev Organiser calls this 7 times to draw 7 numbers, it costs 0.1 LINK per call
+      * @param userProvidedSeed - any random number
+      */
     function getRandomNumber(uint256 userProvidedSeed) public onlyOrganiser returns (bytes32 requestId) {
         require(LINK.balanceOf(address(this)) > fee, "Not enough LINK - fill contract with faucet");
 
