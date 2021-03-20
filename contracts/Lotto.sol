@@ -12,6 +12,9 @@ pragma experimental ABIEncoderV2;
  * Uses VRFConsumerBase and chainlink integration for random number generation.
  */
 contract Lotto is VRFConsumerBase{
+
+    using SafeMathChainlink for uint;
+
     //for creating random number
     bytes32 internal keyHash; //32 bytes
     //for creating random number
@@ -146,11 +149,12 @@ contract Lotto is VRFConsumerBase{
       */
     function buyTicket(uint8[7] memory chosenNumbers) public payable raffleNotStarted validNumbers(chosenNumbers) returns (uint){
         require (msg.value >= ticketPrice);
-        pendingWithdrawals[msg.sender] += (msg.value - ticketPrice);
-        Ticket memory ticket = Ticket(currId++, chosenNumbers, msg.sender, 0, false);
+        pendingWithdrawals[msg.sender] = pendingWithdrawals[msg.sender].add(msg.value - ticketPrice);
+        Ticket memory ticket = Ticket(0, false, msg.sender, chosenNumbers, currId);
+        currId = currId.add(1);
         tickets.push(ticket);
         ticketsByID[ticket.id] = ticket;
-        aggregatePaid += ticketPrice;
+        aggregatePaid = aggregatePaid.add(ticketPrice);
         emit TicketBought(ticket);
         return ticket.id;
     }
@@ -164,7 +168,7 @@ contract Lotto is VRFConsumerBase{
     function importStats(uint[7] memory stats) public onlyOrganiser{
         uint counter = 0;
         for (uint8 i = 0; i < 7; i++){
-            counter += stats[i];
+            counter = counter.add(stats[i]);
         }
         require(counter == currId - 1, "Stats aren't adding up");
         numberOfWinningTicketsByCorrectNumber[0] = stats[0];
@@ -196,7 +200,7 @@ contract Lotto is VRFConsumerBase{
         }
         ticket.numbersCorrect = counter;
         ticket.paidOut = true;
-        pendingWithdrawals[ticket.owner] += winningAmountByCorrectNumber[ticket.numbersCorrect];
+        pendingWithdrawals[ticket.owner] = pendingWithdrawals[ticket.owner].add(winningAmountByCorrectNumber[ticket.numbersCorrect]);
         emit TicketPaidOut(ticket);
     }
     /**
