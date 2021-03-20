@@ -24,7 +24,7 @@ contract('Lotto', () => {
     });
     it('Buying tickets test', async() => {
         const lotto = await Lotto.deployed();
-        const numberOfTicketsToBuy = 10;
+        const numberOfTicketsToBuy = 100;
         for (let i = 0; i < numberOfTicketsToBuy; i++){
             var numbers= [];
             for (let j = 0; j < 7; j++){
@@ -69,7 +69,7 @@ contract('Lotto', () => {
         const lotto = await Lotto.deployed();
         const currId = await lotto.currId.call();
         //console.log(currId.toNumber());
-        let numberOfWinningTicketsByCorrectNumbers = [0,0,0,0,0,0,0];
+        let numberOfWinningTicketsByCorrectNumbers = [0,0,0,0,0,0,0,0];
 
         let resultNumberAt = await lotto.getResultNumbers();
         for (let i = 1; i < currId.toNumber(); i++){
@@ -88,7 +88,7 @@ contract('Lotto', () => {
         }
         //console.log('Ispis broja tacnih odgovora')
         let testingCounter = 0;
-        for(let i = 0; i < 7; i++){
+        for(let i = 0; i < 8; i++){
             console.log('Sa ' + i + ' tacnih brojeva ima : '+ numberOfWinningTicketsByCorrectNumbers[i]);
             testingCounter += numberOfWinningTicketsByCorrectNumbers[i];
         }
@@ -101,17 +101,32 @@ contract('Lotto', () => {
         const statsImported = await lotto.statsImportedBool.call();
         assert(raffleDone && statsImported);
 
-        for (let i = 0; i < 7; i++){
+        for (let i = 0; i <= 7; i++){
             const numberOfTickets = await lotto.numberOfWinningTicketsByCorrectNumber(i);
             assert(numberOfTickets.toNumber() == numberOfWinningTicketsByCorrectNumbers[i]);
 
             const winningsPerCorrectNumbers = await lotto.winningAmountByCorrectNumber(i);
-            //console.log(winningsPerCorrectNumbers.toNumber());
+            console.log(winningsPerCorrectNumbers.toString());
         }
 
 
     });
+    it('withdrawing money', async() =>{
 
+        const lotto = await Lotto.deployed();
+        const currId = await lotto.currId.call();
+        for (let i = 1; i < currId.toNumber(); i++){
+            await lotto.payOutTicketByID(i);
+        }
+        const withdrawnAmount = await lotto.withdrawWinnings();
+        console.log(withdrawnAmount);
+
+        const forOrganiser = await lotto.withdrawOrganisersCut();
+        console.log(forOrganiser);
+
+        const didOrganiserWitdhraw = await lotto.organisersCutWithdrawn.call();
+        assert(didOrganiserWitdhraw);
+    })
 
     //need chainlink connection on kovan for this to work
     //TODO  test what happens when you send more value than ticketPrice, if you're succesfull in withdrawing the rest

@@ -162,9 +162,9 @@ contract Lotto is VRFConsumerBase{
       * @param stats - array of integers equal to or greater than 0
       * - values of array combined have to be equal to currId - 1
       */
-    function importStats(uint[7] memory stats) public onlyOrganiser{
+    function importStats(uint[8] memory stats) public onlyOrganiser{
         uint counter = 0;
-        for (uint8 i = 0; i < 7; i++){
+        for (uint8 i = 0; i < 8; i++){
             counter = counter.add(stats[i]);
         }
         require(counter == currId - 1, "Stats aren't adding up");
@@ -175,6 +175,7 @@ contract Lotto is VRFConsumerBase{
         numberOfWinningTicketsByCorrectNumber[4] = stats[4];
         numberOfWinningTicketsByCorrectNumber[5] = stats[5];
         numberOfWinningTicketsByCorrectNumber[6] = stats[6];
+        numberOfWinningTicketsByCorrectNumber[7] = stats[7];
         statsImportedBool = true;
         startRaffle();
     }
@@ -192,6 +193,7 @@ contract Lotto is VRFConsumerBase{
             for (uint8 j = 0; j < 7; j++){
                 if (ticket.chosenNumbers[i] == resultNumbers[j]){
                         counter += 1;
+                        break;
                 }
             }
         }
