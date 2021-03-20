@@ -218,7 +218,6 @@ contract Lotto is VRFConsumerBase{
       */
     function getRandomNumber(uint256 userProvidedSeed) public onlyOrganiser returns (bytes32 requestId) {
         //changed for testing without chainlink, result number at the end is equal to userProvidedSeed
-
         fulfillRandomness(keccak256(abi.encodePacked("ok")), userProvidedSeed);
         return keccak256(abi.encodePacked("ok"));
         /*
@@ -238,10 +237,13 @@ contract Lotto is VRFConsumerBase{
     //Callback function used by VRF Coordinator
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
         randomResult = randomness;
-        if (numberCounter < 7){
-            uint8 numberPick = uint8((randomResult % (numberDrum.length - 1 - numberCounter)));
-            uint8 resultNumber = numberDrum[numberPick];
-            numberDrum[numberPick] = numberDrum[numberDrum.length - 1 - numberCounter];
+        uint forDivision = 100;
+        for (uint8 i = 0; i < 7; i++){
+            //in first loop pickingNumber is 0-39, in second 0-38, third 0-37...
+            uint8 pickingNumber = uint8((randomResult / forDivision % 100) % (40 - i));
+            forDivision = forDivision*100;
+            uint8 resultNumber = numberDrum[pickingNumber];
+            numberDrum[pickingNumber] = numberDrum[38-i];
             resultNumbers[numberCounter++] = resultNumber;
             emit NumberDrawn(resultNumber);
         }
