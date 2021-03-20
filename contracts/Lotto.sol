@@ -213,7 +213,7 @@ contract Lotto is VRFConsumerBase{
         emit Withdrawal(msg.sender, amount);
     }
     /**
-      * @dev Organiser calls this 7 times to draw 7 numbers, it costs 0.1 LINK per call
+      * @dev Organiser calls this to draw 7 numbers, it costs 0.1 LINK per call
       * @param userProvidedSeed - any random number
       */
     function getRandomNumber(uint256 userProvidedSeed) public onlyOrganiser returns (bytes32 requestId) {
@@ -240,7 +240,7 @@ contract Lotto is VRFConsumerBase{
         uint forDivision = 100;
         for (uint8 i = 0; i < 7; i++){
             //in first loop pickingNumber is 0-39, in second 0-38, third 0-37...
-            uint8 pickingNumber = uint8((randomResult / forDivision % 100) % (40 - i));
+            uint8 pickingNumber = uint8((randomResult / forDivision % 1000) % (40 - i));
             forDivision = forDivision*100;
             uint8 resultNumber = numberDrum[pickingNumber];
             numberDrum[pickingNumber] = numberDrum[38-i];

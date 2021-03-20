@@ -24,7 +24,7 @@ contract('Lotto', () => {
     });
     it('Buying tickets test', async() => {
         const lotto = await Lotto.deployed();
-        const numberOfTicketsToBuy = 0;
+        const numberOfTicketsToBuy = 10;
         for (let i = 0; i < numberOfTicketsToBuy; i++){
             var numbers= [];
             for (let j = 0; j < 7; j++){
@@ -60,6 +60,7 @@ contract('Lotto', () => {
         let resultNumberAt = await lotto.getResultNumbers();
         for (let i = 0; i < 7; i++){
             console.log(resultNumberAt[i].toNumber());
+            assert(resultNumberAt[i].toNumber() > 0 && resultNumberAt[i].toNumber() < 40);
         }
     });
 
@@ -88,7 +89,7 @@ contract('Lotto', () => {
         //console.log('Ispis broja tacnih odgovora')
         let testingCounter = 0;
         for(let i = 0; i < 7; i++){
-            console.log('Sa' + i + ' tacnih brojeva ima : '+ numberOfWinningTicketsByCorrectNumbers[i]);
+            console.log('Sa ' + i + ' tacnih brojeva ima : '+ numberOfWinningTicketsByCorrectNumbers[i]);
             testingCounter += numberOfWinningTicketsByCorrectNumbers[i];
         }
         assert(testingCounter == currId-1);
