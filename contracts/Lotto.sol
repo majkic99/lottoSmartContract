@@ -43,8 +43,6 @@ contract Lotto is VRFConsumerBase{
 
     Ticket[] tickets;
 
-    mapping(uint => Ticket) public ticketsByID;
-
     mapping (address => uint) pendingWithdrawals;
 
     mapping(uint8 => uint) public numberOfWinningTicketsByCorrectNumber;
@@ -153,7 +151,6 @@ contract Lotto is VRFConsumerBase{
         Ticket memory ticket = Ticket(0, false, msg.sender, chosenNumbers, currId);
         currId = currId.add(1);
         tickets.push(ticket);
-        ticketsByID[ticket.id] = ticket;
         aggregatePaid = aggregatePaid.add(ticketPrice);
         emit TicketBought(ticket);
         return ticket.id;
@@ -188,7 +185,7 @@ contract Lotto is VRFConsumerBase{
       * @param id - id of ticket you want to be reedemed
       */
     function payOutTicketByID(uint id) public raffleDone{
-        Ticket storage ticket = ticketsByID[id];
+        Ticket storage ticket = tickets[id-1];
         require(ticket.owner == msg.sender, "You're not the owner of this ticket");
         uint8 counter = 0;
         for (uint8 i = 0; i < 7; i++){
@@ -231,7 +228,7 @@ contract Lotto is VRFConsumerBase{
     }
 
     function getChosenNumbersByTicketID(uint id) public view returns(uint8[7] memory){
-        return ticketsByID[id].chosenNumbers;
+        return tickets[id-1].chosenNumbers;
     }
 
     //Callback function used by VRF Coordinator
